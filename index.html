@@ -40,6 +40,12 @@ input,select{width:100%;padding:11px 12px;border-radius:4px;border:1px solid var
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
 .tabs button{border:1px solid var(--line);background:var(--in);padding:7px 13px;border-radius:4px}
 .tabs button.on{background:var(--btn);color:var(--btnink);border-color:var(--btn)}
+.tb{width:100%;border-collapse:collapse;font-size:.78rem;margin:0 0 4px}
+.tb th,.tb td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tb th{color:var(--mute);font-weight:500;letter-spacing:.06em;text-transform:uppercase;font-size:.7rem}
+.tb tfoot td{font-weight:600}
+.tb td{white-space:nowrap}
+.tb td:nth-child(2){white-space:normal;min-width:90px}
 .hbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0 12px}
 .hbar select{width:auto}
 .hbar button{border:1px solid var(--line);background:var(--in);border-radius:4px;padding:9px 14px}
@@ -103,7 +109,16 @@ img.sketch{mix-blend-mode:multiply}
     </section>
 
     <section class="panel" id="a2" style="--acc:var(--a2)">
-      <h2>Assignment #2: Income Tax Calculator</h2><p class="d">Annual taxable income using the Philippine TRAIN brackets (2023 onward).</p>
+      <h2>Assignment #2: Income Tax Calculator</h2><p class="d">Enter the net taxable income. Income Tax = Basic Tax + Rate.</p>
+      <div style="overflow-x:auto"><table class="tb">
+        <tr><th>Over</th><th>But not over</th><th>Basic tax + Rate</th></tr>
+        <tr><td>–</td><td>₱250,000</td><td>0%</td></tr>
+        <tr><td>₱250,000</td><td>₱400,000</td><td>20% of the excess over ₱250,000</td></tr>
+        <tr><td>₱400,000</td><td>₱800,000</td><td>₱30,000 + 25% of the excess over ₱400,000</td></tr>
+        <tr><td>₱800,000</td><td>₱2,000,000</td><td>₱130,000 + 30% of the excess over ₱800,000</td></tr>
+        <tr><td>₱2,000,000</td><td>₱8,000,000</td><td>₱490,000 + 32% of the excess over ₱2,000,000</td></tr>
+        <tr><td>₱8,000,000</td><td></td><td>₱2,410,000 + 35% of the excess over ₱8,000,000</td></tr>
+      </table></div>
       <label>Annual taxable income (₱)</label><input id="t-inc" type="number" min="0" step="any" placeholder="e.g. 600000">
       <button class="go2" id="t-go">Compute tax</button><div class="out" id="t-out"></div>
     </section>
@@ -116,10 +131,22 @@ img.sketch{mix-blend-mode:multiply}
     </section>
 
     <section class="panel" id="a4" style="--acc:var(--a4)">
-      <h2>Assignment #4: Simple Payroll</h2><p class="d">Regular pay up to 40 hours, overtime at 1.25×. Deductions: SSS 4.5%, PhilHealth 2.5%, Pag-IBIG ₱100.</p>
+      <h2>Assignment #4: Payroll Program</h2>
+      <p class="d">Add and delete employees in the payroll list. Gross Pay = Days Worked × Daily Rate. Net Pay = Gross Pay − Deduction Amount.</p>
       <label>Employee name</label><input id="p-name" placeholder="Juan Dela Cruz">
-      <div class="row"><div><label>Hours worked</label><input id="p-hrs" type="number" min="0" step="any"></div><div><label>Hourly rate (₱)</label><input id="p-rate" type="number" min="0" step="any"></div></div>
-      <button class="go2" id="p-go">Compute payroll</button><div class="out" id="p-out"></div>
+      <div class="row">
+        <div><label>Days worked</label><input id="p-days" type="number" min="0" step="any"></div>
+        <div><label>Daily rate (₱)</label><input id="p-rate" type="number" min="0" step="any"></div>
+      </div>
+      <label>Deduction amount (₱)</label><input id="p-ded" type="number" min="0" step="any">
+      <button class="go2" id="p-add">Add employee</button>
+      <div class="out" id="p-msg" style="display:none;min-height:0"></div>
+      <div style="overflow-x:auto;margin-top:18px"><table class="tb">
+        <thead><tr><th>No.</th><th>Employee Name</th><th>Days Worked</th><th>Daily Rate</th><th>Gross Pay</th><th>Deduction Amount</th><th>Net Pay</th></tr></thead>
+        <tbody id="p-body"></tbody><tfoot id="p-foot"></tfoot>
+      </table></div>
+      <label>Delete by line number</label>
+      <div class="row"><input id="p-del" type="number" min="1" step="1" placeholder="No."><button class="go2" id="p-delbtn" style="margin-top:0">Delete</button></div>
     </section>
 
     <section class="panel" id="a5" style="--acc:var(--dark)">
@@ -198,14 +225,15 @@ $("c-go").onclick=function(){
 $("t-go").onclick=function(){
   var inc=parseFloat($("t-inc").value),o=$("t-out");
   if(isNaN(inc)||inc<0){o.textContent="Please enter a valid income.";return}
-  var tax,note;
-  if(inc<=250000){tax=0;note="Exempt (₱250,000 and below)"}
-  else if(inc<=400000){tax=(inc-250000)*.15;note="15% of the excess over ₱250,000"}
-  else if(inc<=800000){tax=22500+(inc-400000)*.20;note="₱22,500 + 20% of the excess over ₱400,000"}
-  else if(inc<=2000000){tax=102500+(inc-800000)*.25;note="₱102,500 + 25% of the excess over ₱800,000"}
-  else if(inc<=8000000){tax=402500+(inc-2000000)*.30;note="₱402,500 + 30% of the excess over ₱2,000,000"}
-  else{tax=2202500+(inc-8000000)*.35;note="₱2,202,500 + 35% of the excess over ₱8,000,000"}
-  o.textContent="Taxable income: "+peso(inc)+"\nBracket: "+note+"\nIncome tax: "+peso(tax)+"\nAfter tax: "+peso(inc-tax);save("Income Tax","Income "+peso(inc)+" → tax "+peso(tax),o.textContent);
+  var tax,base,rate,over,note;
+  if(inc<=250000){base=0;rate=0;over=0;note="0% (₱250,000 and below)"}
+  else if(inc<=400000){base=0;rate=.20;over=250000;note="20% of the excess over ₱250,000"}
+  else if(inc<=800000){base=30000;rate=.25;over=400000;note="₱30,000 + 25% of the excess over ₱400,000"}
+  else if(inc<=2000000){base=130000;rate=.30;over=800000;note="₱130,000 + 30% of the excess over ₱800,000"}
+  else if(inc<=8000000){base=490000;rate=.32;over=2000000;note="₱490,000 + 32% of the excess over ₱2,000,000"}
+  else{base=2410000;rate=.35;over=8000000;note="₱2,410,000 + 35% of the excess over ₱8,000,000"}
+  var ex=Math.max(inc-over,0),part=ex*rate;tax=base+part;
+  o.textContent="Taxable income: "+peso(inc)+"\nBracket: "+note+"\nBasic tax: "+peso(base)+"\nRate: "+Math.round(rate*100)+"% of "+peso(ex)+" = "+peso(part)+"\nIncome tax (Basic tax + Rate): "+peso(tax)+"\nAfter tax: "+peso(inc-tax);save("Income Tax","Income "+peso(inc)+" → tax "+peso(tax),o.textContent);
 };
 
 /* Assignment 3 */
@@ -234,15 +262,46 @@ $("n-go").onclick=function(){
   var txt=o.textContent;save("Loops",lab+": "+(txt.length>90?txt.slice(0,90)+"…":txt),txt.length>90?txt:"");
 };
 
-/* Assignment 4 */
-$("p-go").onclick=function(){
-  var name=$("p-name").value.trim()||"Employee",h=parseFloat($("p-hrs").value),r=parseFloat($("p-rate").value),o=$("p-out");
-  if(isNaN(h)||isNaN(r)||h<0||r<0){o.textContent="Enter valid hours and rate.";return}
-  var reg=Math.min(h,40),ot=Math.max(h-40,0);
-  var gross=reg*r+ot*r*1.25,sss=gross*.045,ph=gross*.025,pag=gross>0?100:0;
-  var ded=sss+ph+pag;
-  o.textContent="Employee: "+name+"\nRegular pay ("+reg+" h): "+peso(reg*r)+"\nOvertime pay ("+ot+" h): "+peso(ot*r*1.25)+"\nGross pay: "+peso(gross)+"\n\nSSS: "+peso(sss)+"\nPhilHealth: "+peso(ph)+"\nPag-IBIG: "+peso(pag)+"\nTotal deductions: "+peso(ded)+"\n\nNET PAY: "+peso(gross-ded);save("Payroll",name+": net pay "+peso(gross-ded),o.textContent);
+/* Assignment 4: Payroll list (add / delete) */
+var emps=[],PK="pa-payroll";
+try{emps=JSON.parse(localStorage.getItem(PK)||"[]")}catch(e){emps=[]}
+function pSave(){try{localStorage.setItem(PK,JSON.stringify(emps))}catch(e){}}
+function pMsg(t){var m=$("p-msg");m.textContent=t;m.style.display=t?"block":"none"}
+function pRow(parent,vals,colspan){
+  var tr=document.createElement("tr");
+  vals.forEach(function(v){var c=document.createElement("td");c.textContent=v;if(colspan)c.colSpan=colspan;tr.appendChild(c)});
+  parent.appendChild(tr);
+}
+function renderP(){
+  var tb=$("p-body"),f=$("p-foot");tb.textContent="";f.textContent="";
+  if(!emps.length){pRow(tb,["No employees yet. Add one above."],7);return}
+  var tg=0,tdd=0,tn=0;
+  emps.forEach(function(e,i){
+    var g=e.d*e.r,n=g-e.x;tg+=g;tdd+=e.x;tn+=n;
+    pRow(tb,[i+1,e.n,e.d,peso(e.r),peso(g),peso(e.x),peso(n)]);
+  });
+  pRow(f,["","Total","","",peso(tg),peso(tdd),peso(tn)]);
+}
+$("p-add").onclick=function(){
+  var n=$("p-name").value.trim(),d=parseFloat($("p-days").value),r=parseFloat($("p-rate").value),x=parseFloat($("p-ded").value);
+  if(!n||isNaN(d)||isNaN(r)||isNaN(x)||d<0||r<0||x<0){pMsg("Please fill in all four fields with valid values.");return}
+  var g=d*r;
+  if(x>g){pMsg("The deduction can’t be more than the gross pay ("+peso(g)+").");return}
+  emps.push({n:n,d:d,r:r,x:x});pSave();renderP();
+  pMsg("Added "+n+" on line "+emps.length+". Gross pay "+peso(g)+", net pay "+peso(g-x)+".");
+  save("Payroll","Added "+n+": net pay "+peso(g-x),"Gross pay "+peso(g)+" − deduction "+peso(x)+" = net pay "+peso(g-x));
+  ["p-name","p-days","p-rate","p-ded"].forEach(function(id){$(id).value=""});
+  $("p-name").focus();
 };
+$("p-delbtn").onclick=function(){
+  var k=parseInt($("p-del").value,10);
+  if(!emps.length){pMsg("The list is empty.");return}
+  if(isNaN(k)||k<1||k>emps.length){pMsg("Enter a line number from 1 to "+emps.length+".");return}
+  var e=emps.splice(k-1,1)[0];pSave();renderP();$("p-del").value="";
+  pMsg("Deleted line "+k+" ("+e.n+"). The table has been updated.");
+  save("Payroll","Deleted line "+k+": "+e.n,"");
+};
+renderP();
 
 /* History storage: per-person db when signed in, otherwise this device */
 var hist=[],store=null,filt="all",LS="pa-history",clr=false;
